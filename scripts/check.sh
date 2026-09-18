@@ -23,6 +23,15 @@ done
 "$repo_root/scripts/check-toolchains.sh" --help >/dev/null
 "$repo_root/scripts/build-firefox.sh" --help >/dev/null
 
+if target_error=$(
+  FXC_TARGET=unsupported "$repo_root/scripts/build-firefox.sh" "$repo_root" 2>&1
+); then
+  printf 'unsupported FXC_TARGET unexpectedly succeeded\n' >&2
+  exit 1
+fi
+test "$target_error" = \
+  'FXC_TARGET must be win64 or win64-aarch64: unsupported'
+
 if command -v rg >/dev/null; then
   scan_command=(
     rg -n '/Users/farmisen|2026091[0-9]T|fxe-win-cross' "$repo_root"

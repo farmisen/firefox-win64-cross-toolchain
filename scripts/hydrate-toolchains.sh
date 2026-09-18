@@ -6,8 +6,9 @@ usage() {
   cat <<'EOF'
 Usage: hydrate-toolchains.sh FIREFOX_CHECKOUT
 
-Download the Firefox-pinned Mozilla and Microsoft toolchains into a Docker
-volume. Set FXC_ACCEPT_MICROSOFT_LICENSE=1 before the first Microsoft download.
+Download the Firefox-pinned Mozilla and Microsoft toolchains for x86-64 and
+ARM64 Windows builds into a Docker volume. Set
+FXC_ACCEPT_MICROSOFT_LICENSE=1 before the first Microsoft download.
 
 Environment:
   FXC_IMAGE         Container image to use
@@ -73,7 +74,9 @@ docker run --rm \
     ./mach --no-interactive bootstrap \
       --application-choice browser \
       --no-system-changes
-    "$HOME/.cargo/bin/rustup" target add x86_64-pc-windows-msvc
+    "$HOME/.cargo/bin/rustup" target add \
+      x86_64-pc-windows-msvc \
+      aarch64-pc-windows-msvc
 
     shopt -s nullglob
     manifests=(build/vs/vs*-aarch64.yaml)
@@ -90,14 +93,16 @@ docker run --rm \
 
     vs_is_complete() {
       local root=$1
-      local ml64 midl fxc
-      ml64=$(find "$root/VC/Tools/MSVC" -type f \
+      local ml64 armasm64 midl fxc
+      ml64=$(find "$root/VC/Tools/MSVC" -type f -executable \
         -path "*/bin/Hostarm64/x64/ml64.exe" -print -quit 2>/dev/null || true)
-      midl=$(find "$root/Windows Kits/10/bin" -type f \
+      armasm64=$(find "$root/VC/Tools/MSVC" -type f -executable \
+        -path "*/bin/Hostarm64/arm64/armasm64.exe" -print -quit 2>/dev/null || true)
+      midl=$(find "$root/Windows Kits/10/bin" -type f -executable \
         -path "*/arm64/midl.exe" -print -quit 2>/dev/null || true)
-      fxc=$(find "$root/Windows Kits/10/bin" -type f \
+      fxc=$(find "$root/Windows Kits/10/bin" -type f -executable \
         -path "*/arm64/fxc.exe" -print -quit 2>/dev/null || true)
-      [[ -n "$ml64" && -n "$midl" && -n "$fxc" ]]
+      [[ -n "$ml64" && -n "$armasm64" && -n "$midl" && -n "$fxc" ]]
     }
 
     installed_hash=

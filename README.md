@@ -1,6 +1,6 @@
-# Firefox Win64 cross toolchain
+# Firefox Windows cross toolchain
 
-Build and package Firefox for x86-64 Windows on a Linux ARM64 host.
+Build and package Firefox for x86-64 or ARM64 Windows on a Linux ARM64 host.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ FXC_IMAGE=ghcr.io/example/firefox-win64-cross-toolchain:wine-11.10-bookworm-r1 \
   ./scripts/build-image.sh
 ```
 
-## Build Firefox
+## Build Firefox for Windows x86-64
 
 The first build downloads the Mozilla and Microsoft toolchains pinned by the
 Firefox checkout. Review the applicable Microsoft terms, then run:
@@ -36,7 +36,7 @@ FXC_ACCEPT_MICROSOFT_LICENSE=1 \
 
 The command configures, builds, and packages Firefox. It stores downloaded
 toolchains and the object directory in Docker volumes. The installer, ZIP,
-checksums, and Firefox revision are written to `artifacts/`.
+checksums, and Firefox revision are written to `artifacts/win64/`.
 
 For later builds from the same checkout:
 
@@ -44,10 +44,25 @@ For later builds from the same checkout:
 ./scripts/build-firefox.sh /absolute/path/to/firefox
 ```
 
+## Build Firefox for Windows ARM64
+
+```sh
+FXC_ACCEPT_MICROSOFT_LICENSE=1 \
+  FXC_TARGET=win64-aarch64 \
+  ./scripts/build-firefox.sh /absolute/path/to/firefox
+```
+
+After the toolchains are hydrated, omit `FXC_ACCEPT_MICROSOFT_LICENSE`.
+ARM64 artifacts are written to `artifacts/win64-aarch64/`.
+
+The targets use separate object-directory volumes. They share the downloaded
+toolchain volume.
+
 Set these variables to change the defaults:
 
 | Variable | Purpose |
 | --- | --- |
+| `FXC_TARGET` | `win64` (default) or `win64-aarch64` |
 | `FXC_IMAGE` | Container image name |
 | `FXC_STATE_VOLUME` | Downloaded toolchain volume |
 | `FXC_OBJDIR_VOLUME` | Firefox object directory volume |
@@ -62,8 +77,8 @@ Set these variables to change the defaults:
 ```
 
 The first command checks the repository and base image. The second command
-executes the hydrated MIDL, FXC, and Microsoft x64 assembler under native ARM64
-Wine.
+executes the hydrated MIDL, FXC, and Microsoft x64 and ARM64 assemblers under
+native ARM64 Wine. It also compiles minimal Windows binaries for both targets.
 
 ## Image contents
 
