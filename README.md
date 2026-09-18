@@ -1,60 +1,81 @@
 # Firefox Win64 cross toolchain
 
-Build tooling for compiling x86-64 Windows Firefox on Linux ARM64 hosts.
-
-The repository currently contains the publishable base image proven by the
-initial cross-build. It does not include Firefox source, Microsoft toolchains,
-Windows SDK files, build outputs, credentials, or hydrated Docker volumes.
+Build and package Firefox for x86-64 Windows on a Linux ARM64 host.
 
 ## Requirements
 
-- Docker with `linux/arm64` support
 - An ARM64 host or native ARM64 Docker runner
-- About 16 GB of memory for a full Firefox build
-- About 60 GB of free disk space for source, toolchains, and build outputs
+- Docker with `linux/arm64` support
+- A Firefox source checkout
+- At least 16 GB of memory and 60 GB of free disk space
 
-## Build the base image
+## Build the image
 
 ```sh
 ./scripts/build-image.sh
 ```
 
-Override the local image name when needed:
+The default image tag is
+`firefox-win64-cross-toolchain:wine-11.10-bookworm-r1`. Set `FXC_IMAGE` to use
+a different tag:
 
 ```sh
 FXC_IMAGE=ghcr.io/example/firefox-win64-cross-toolchain:wine-11.10-bookworm-r1 \
   ./scripts/build-image.sh
 ```
 
-## Verify the image
+## Build Firefox
+
+The first build downloads the Mozilla and Microsoft toolchains pinned by the
+Firefox checkout. Review the applicable Microsoft terms, then run:
+
+```sh
+FXC_ACCEPT_MICROSOFT_LICENSE=1 \
+  ./scripts/build-firefox.sh /absolute/path/to/firefox
+```
+
+The command configures, builds, and packages Firefox. It stores downloaded
+toolchains and the object directory in Docker volumes. The installer, ZIP,
+checksums, and Firefox revision are written to `artifacts/`.
+
+For later builds from the same checkout:
+
+```sh
+./scripts/build-firefox.sh /absolute/path/to/firefox
+```
+
+Set these variables to change the defaults:
+
+| Variable | Purpose |
+| --- | --- |
+| `FXC_IMAGE` | Container image name |
+| `FXC_STATE_VOLUME` | Downloaded toolchain volume |
+| `FXC_OBJDIR_VOLUME` | Firefox object directory volume |
+| `FXC_ARTIFACTS_DIR` | Host artifact directory |
+| `FXC_JOBS` | Parallel build job count |
+
+## Verify the setup
 
 ```sh
 ./scripts/check.sh
+./scripts/check-toolchains.sh
 ```
 
-The smoke test checks that the container is ARM64, Wine is the patched native
-ARM64 Wine 11.10 build, and the Linux packaging commands are present.
+The first command checks the repository and base image. The second command
+executes the hydrated MIDL, FXC, and Microsoft x64 assembler under native ARM64
+Wine.
 
-## Current status
+## Image contents
 
-The toolchain has configured, built, and packaged Firefox Enterprise revision
-`d09ed62da3ece870611d1928b4828e3b46bc9e66` for Windows x86-64. See
-[`docs/verified-run.md`](docs/verified-run.md) for the recorded result.
+The image contains Debian packages and a patched native ARM64 build of Wine
+11.10. The Wine source URL and SHA-256 digest are pinned in
+[`docker/Dockerfile`](docker/Dockerfile). The Wine patch is stored in
+[`patches/wine-11.10-page-align.patch`](patches/wine-11.10-page-align.patch).
 
-The next repository unit will add clean-machine hydration of Mozilla and
-Microsoft toolchains, the Firefox build command, and artifact export. Until
-that is verified, this repository should not claim a one-command Firefox
-build from empty Docker state.
-
-## Distribution boundary
-
-The image contains Debian packages and the patched Wine build only. Do not add
-MSVC, Visual Studio VSIX files, the Windows SDK, Firefox Enterprise source, or
-`.mozbuild` state to a published image without an approved licensing and
-source-handling review.
-
-Wine source is downloaded from WineHQ at build time and verified against a
-pinned SHA-256 digest. The exact patch is stored in `patches/`.
+The published image does not contain Firefox source, MSVC, Visual Studio VSIX
+files, the Windows SDK, a Wine prefix, `.mozbuild` state, credentials, or build
+outputs. Toolchain hydration stores Microsoft files in the local
+`FXC_STATE_VOLUME` after license acceptance.
 
 ## License
 

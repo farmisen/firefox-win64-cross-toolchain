@@ -6,9 +6,22 @@ repo_root=$(cd "$(dirname "$0")/.." && pwd)
 
 bash -n "$repo_root"/scripts/*.sh
 
-for file in LICENSE README.md AGENTS.md CLAUDE.md docker/Dockerfile patches/wine-11.10-page-align.patch; do
+for file in \
+  LICENSE \
+  README.md \
+  AGENTS.md \
+  CLAUDE.md \
+  docker/Dockerfile \
+  patches/wine-11.10-page-align.patch \
+  scripts/hydrate-toolchains.sh \
+  scripts/check-toolchains.sh \
+  scripts/build-firefox.sh; do
   test -s "$repo_root/$file"
 done
+
+"$repo_root/scripts/hydrate-toolchains.sh" --help >/dev/null
+"$repo_root/scripts/check-toolchains.sh" --help >/dev/null
+"$repo_root/scripts/build-firefox.sh" --help >/dev/null
 
 if command -v rg >/dev/null; then
   scan_command=(

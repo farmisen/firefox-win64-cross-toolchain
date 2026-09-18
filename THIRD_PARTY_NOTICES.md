@@ -11,6 +11,6 @@ The exact source URL and digest are declared in `docker/Dockerfile`.
 ## Microsoft components
 
 This repository and its base image do not distribute Visual Studio, MSVC,
-Windows SDK, MIDL, FXC, or related Microsoft binaries. Later bootstrap tooling
-must download those components from their approved upstream source after the
-operator accepts the applicable terms.
+Windows SDK, MIDL, FXC, or related Microsoft binaries. The hydration command
+downloads the versions pinned by the Firefox checkout after the operator
+accepts the applicable terms. It stores them in a local Docker volume.

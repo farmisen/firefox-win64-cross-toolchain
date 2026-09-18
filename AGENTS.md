@@ -13,8 +13,11 @@ Docker tooling for building x86-64 Windows Firefox on Linux ARM64 hosts.
 ## Commands
 
 - Build image: `./scripts/build-image.sh`
+- Hydrate toolchains: `FXC_ACCEPT_MICROSOFT_LICENSE=1 ./scripts/hydrate-toolchains.sh /path/to/firefox`
+- Build Firefox: `./scripts/build-firefox.sh /path/to/firefox`
 - Run all checks: `./scripts/check.sh`
 - Run the image smoke test: `./scripts/smoke-test-image.sh`
+- Run the toolchain smoke test: `./scripts/check-toolchains.sh`
 
 Run `./scripts/check.sh` before declaring a change complete.
 
