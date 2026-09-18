@@ -47,14 +47,40 @@ RUN mkdir wine-arm64 /opt/wine \
 RUN file -L /opt/wine/bin/wine \
     && /opt/wine/bin/wine --version
 
-FROM debian:bookworm-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171
+FROM debian:bookworm-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171 AS wine-runtime
 
 ARG WINE_VERSION=11.10
 
-LABEL org.opencontainers.image.title="Firefox Win64 cross toolchain" \
-      org.opencontainers.image.description="Linux ARM64 base for cross-compiling Firefox to Windows x86-64" \
+LABEL org.opencontainers.image.title="Patched ARM64 Wine runtime" \
+      org.opencontainers.image.description="Minimal Linux ARM64 runtime for patched Wine" \
       org.opencontainers.image.licenses="LGPL-2.1-or-later" \
+      org.opencontainers.image.source="https://github.com/farmisen/firefox-win64-cross-toolchain" \
       org.opencontainers.image.version="wine-${WINE_VERSION}-bookworm-r1"
+
+COPY --from=wine-builder /opt/wine /opt/wine
+COPY --from=wine-builder /work/wine-source/LICENSE /usr/share/doc/wine/LICENSE
+COPY --from=wine-builder /work/wine-source/COPYING.LIB /usr/share/doc/wine/COPYING.LIB
+COPY patches/wine-11.10-page-align.patch /usr/share/doc/wine/wine-11.10-page-align.patch
+
+RUN useradd --create-home --uid 1000 builder
+
+ENV PATH="/opt/wine/bin:${PATH}" \
+    WINEDEBUG=-all
+
+USER builder
+WORKDIR /home/builder
+
+CMD ["bash"]
+
+FROM wine-runtime AS firefox-toolchain
+
+ARG WINE_VERSION=11.10
+
+LABEL org.opencontainers.image.title="Firefox Windows cross toolchain" \
+      org.opencontainers.image.description="Linux ARM64 base for cross-compiling Firefox to Windows x86-64 or ARM64" \
+      org.opencontainers.image.version="wine-${WINE_VERSION}-bookworm-r1"
+
+USER root
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -75,17 +101,8 @@ RUN apt-get update \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=wine-builder /opt/wine /opt/wine
-COPY --from=wine-builder /work/wine-source/LICENSE /usr/share/doc/wine/LICENSE
-COPY --from=wine-builder /work/wine-source/COPYING.LIB /usr/share/doc/wine/COPYING.LIB
-COPY patches/wine-11.10-page-align.patch /usr/share/doc/wine/wine-11.10-page-align.patch
-
-RUN useradd --create-home --uid 1000 builder \
-    && mkdir -p /builds/worker/checkouts \
+RUN mkdir -p /builds/worker/checkouts \
     && chown -R builder:builder /builds/worker/checkouts
-
-ENV PATH="/opt/wine/bin:${PATH}" \
-    WINEDEBUG=-all
 
 USER builder
 WORKDIR /builds/worker/checkouts

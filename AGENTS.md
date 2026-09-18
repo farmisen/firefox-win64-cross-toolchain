@@ -12,7 +12,9 @@ Docker tooling for building x86-64 and ARM64 Windows Firefox on Linux ARM64 host
 
 ## Commands
 
-- Build image: `./scripts/build-image.sh`
+- Build images: `./scripts/build-image.sh`
+- Check Wine runtime image: `./scripts/smoke-test-wine-runtime-image.sh`
+- Check Microsoft tools under the Wine runtime: `./scripts/check-wine-runtime-tools.sh`
 - Hydrate toolchains: `FXC_ACCEPT_MICROSOFT_LICENSE=1 ./scripts/hydrate-toolchains.sh /path/to/firefox`
 - Build Firefox x86-64: `./scripts/build-firefox.sh /path/to/firefox`
 - Build Firefox ARM64: `FXC_TARGET=win64-aarch64 ./scripts/build-firefox.sh /path/to/firefox`

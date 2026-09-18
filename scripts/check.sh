@@ -15,12 +15,15 @@ for file in \
   patches/wine-11.10-page-align.patch \
   scripts/hydrate-toolchains.sh \
   scripts/check-toolchains.sh \
+  scripts/check-wine-runtime-tools.sh \
+  scripts/smoke-test-wine-runtime-image.sh \
   scripts/build-firefox.sh; do
   test -s "$repo_root/$file"
 done
 
 "$repo_root/scripts/hydrate-toolchains.sh" --help >/dev/null
 "$repo_root/scripts/check-toolchains.sh" --help >/dev/null
+"$repo_root/scripts/check-wine-runtime-tools.sh" --help >/dev/null
 "$repo_root/scripts/build-firefox.sh" --help >/dev/null
 
 if target_error=$(
@@ -55,3 +58,4 @@ if "${scan_command[@]}"; then
 fi
 
 "$repo_root/scripts/smoke-test-image.sh"
+"$repo_root/scripts/smoke-test-wine-runtime-image.sh"

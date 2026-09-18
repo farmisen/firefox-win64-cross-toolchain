@@ -9,18 +9,38 @@ Build and package Firefox for x86-64 or ARM64 Windows on a Linux ARM64 host.
 - A Firefox source checkout
 - At least 16 GB of memory and 60 GB of free disk space
 
-## Build the image
+## Published images
+
+The Firefox build image contains patched native ARM64 Wine and the Linux tools
+needed by the Firefox build:
+
+```sh
+docker pull \
+  ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r1
+```
+
+The minimal runtime image contains the same Wine installation without the
+Firefox build tools:
+
+```sh
+docker pull \
+  ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r1
+```
+
+Both images support `linux/arm64` only.
+
+## Build the images
 
 ```sh
 ./scripts/build-image.sh
 ```
 
-The default image tag is
-`firefox-win64-cross-toolchain:wine-11.10-bookworm-r1`. Set `FXC_IMAGE` to use
-a different tag:
+The command builds the Wine runtime and Firefox toolchain images. Set
+`FXC_WINE_IMAGE` and `FXC_IMAGE` to change their tags:
 
 ```sh
-FXC_IMAGE=ghcr.io/example/firefox-win64-cross-toolchain:wine-11.10-bookworm-r1 \
+FXC_WINE_IMAGE=example/wine-runtime:wine-11.10-bookworm-r1 \
+  FXC_IMAGE=example/firefox-toolchain:wine-11.10-bookworm-r1 \
   ./scripts/build-image.sh
 ```
 
@@ -64,6 +84,7 @@ Set these variables to change the defaults:
 | --- | --- |
 | `FXC_TARGET` | `win64` (default) or `win64-aarch64` |
 | `FXC_IMAGE` | Container image name |
+| `FXC_WINE_IMAGE` | Minimal Wine runtime image name |
 | `FXC_STATE_VOLUME` | Downloaded toolchain volume |
 | `FXC_OBJDIR_VOLUME` | Firefox object directory volume |
 | `FXC_ARTIFACTS_DIR` | Host artifact directory |
@@ -74,20 +95,23 @@ Set these variables to change the defaults:
 ```sh
 ./scripts/check.sh
 ./scripts/check-toolchains.sh
+./scripts/check-wine-runtime-tools.sh
 ```
 
-The first command checks the repository and base image. The second command
-executes the hydrated MIDL, FXC, and Microsoft x64 and ARM64 assemblers under
-native ARM64 Wine. It also compiles minimal Windows binaries for both targets.
+The first command checks the repository and both images. The second checks the
+complete hydrated toolchain and compiles minimal Windows binaries for both
+targets. The third executes MIDL, FXC, and the Microsoft x64 and ARM64
+assemblers using only the minimal Wine runtime image.
 
 ## Image contents
 
-The image contains Debian packages and a patched native ARM64 build of Wine
-11.10. The Wine source URL and SHA-256 digest are pinned in
+Both images contain a patched native ARM64 build of Wine 11.10. The toolchain
+image also contains the Debian packages used to build Firefox. The Wine source
+URL and SHA-256 digest are pinned in
 [`docker/Dockerfile`](docker/Dockerfile). The Wine patch is stored in
 [`patches/wine-11.10-page-align.patch`](patches/wine-11.10-page-align.patch).
 
-The published image does not contain Firefox source, MSVC, Visual Studio VSIX
+The published images do not contain Firefox source, MSVC, Visual Studio VSIX
 files, the Windows SDK, a Wine prefix, `.mozbuild` state, credentials, or build
 outputs. Toolchain hydration stores Microsoft files in the local
 `FXC_STATE_VOLUME` after license acceptance.
