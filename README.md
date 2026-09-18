@@ -125,3 +125,20 @@ Mozilla Public License 2.0. See [`LICENSE`](LICENSE).
 
 Third-party components retain their own licenses. See
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+## Build times
+
+These are single clean-build measurements, not averages. Each target used an
+empty object-directory volume and the same previously hydrated toolchain
+volume.
+
+- Host: MacBook Pro (Mac16,7), Apple M4 Pro, 14 cores, 48 GB memory
+- Container runtime: OrbStack, Linux ARM64, 14 CPUs, 15.7 GiB memory
+- Build jobs: `FXC_JOBS=8`
+- Image: `ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2`
+- Firefox revision: `d02caf81ab6ef0bbe70fcbe4e6388923d1744e96`
+
+| Windows target | Compile | Package | Total |
+| --- | ---: | ---: | ---: |
+| ARM64 | 22m 47s | 1m 19s | 24m 41s |
+| x86-64 | 24m 45s | 1m 31s | 26m 46s |
