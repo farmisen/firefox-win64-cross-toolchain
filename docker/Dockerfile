@@ -44,6 +44,39 @@ RUN mkdir wine-arm64 /opt/wine \
     && make -j"$WINE_JOBS" \
     && make install
 
+RUN <<'EOF'
+set -eu
+
+find /opt/wine -type f -exec sh -c '
+    for binary in "$@"; do
+        case "$binary" in
+            *.a)
+                if llvm-readobj --sections "$binary" 2>/dev/null \
+                        | grep -q "Name: \\.debug"; then
+                    rm "$binary"
+                fi
+                continue
+                ;;
+        esac
+        description=$(file -b "$binary")
+        case "$description" in
+            *ELF*) llvm-strip --strip-unneeded "$binary" ;;
+            *PE32*) llvm-strip --strip-debug "$binary" ;;
+        esac
+    done
+' sh {} +
+
+find /opt/wine -type f -exec sh -c '
+    for binary in "$@"; do
+        if llvm-readobj --sections "$binary" 2>/dev/null \
+                | grep -q "Name: \\.debug"; then
+            printf "Debug section remains: %s\n" "$binary" >&2
+            exit 1
+        fi
+    done
+' sh {} +
+EOF
+
 RUN file -L /opt/wine/bin/wine \
     && /opt/wine/bin/wine --version
 
@@ -53,9 +86,10 @@ ARG WINE_VERSION=11.10
 
 LABEL org.opencontainers.image.title="Patched ARM64 Wine runtime" \
       org.opencontainers.image.description="Minimal Linux ARM64 runtime for patched Wine" \
+      org.opencontainers.image.debug-symbols="stripped" \
       org.opencontainers.image.licenses="LGPL-2.1-or-later" \
       org.opencontainers.image.source="https://github.com/farmisen/firefox-win64-cross-toolchain" \
-      org.opencontainers.image.version="wine-${WINE_VERSION}-bookworm-r1"
+      org.opencontainers.image.version="wine-${WINE_VERSION}-bookworm-r2"
 
 COPY --from=wine-builder /opt/wine /opt/wine
 COPY --from=wine-builder /work/wine-source/LICENSE /usr/share/doc/wine/LICENSE
@@ -78,7 +112,7 @@ ARG WINE_VERSION=11.10
 
 LABEL org.opencontainers.image.title="Firefox Windows cross toolchain" \
       org.opencontainers.image.description="Linux ARM64 base for cross-compiling Firefox to Windows x86-64 or ARM64" \
-      org.opencontainers.image.version="wine-${WINE_VERSION}-bookworm-r1"
+      org.opencontainers.image.version="wine-${WINE_VERSION}-bookworm-r2"
 
 USER root
 

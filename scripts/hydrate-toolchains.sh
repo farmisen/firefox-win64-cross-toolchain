@@ -40,7 +40,7 @@ for path in mach build/moz.configure taskcluster/scripts/misc/get_vs.py; do
   fi
 done
 
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r1}
+image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
 accept_microsoft_license=${FXC_ACCEPT_MICROSOFT_LICENSE:-0}
 

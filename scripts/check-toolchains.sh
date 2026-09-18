@@ -26,7 +26,7 @@ if (( $# != 0 )); then
   exit 2
 fi
 
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r1}
+image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
 
 if ! docker image inspect "$image" >/dev/null 2>&1; then

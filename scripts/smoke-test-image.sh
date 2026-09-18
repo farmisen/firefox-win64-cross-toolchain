@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r1}
+image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 
 docker run --rm --platform linux/arm64 "$image" bash -lc '
   set -euo pipefail

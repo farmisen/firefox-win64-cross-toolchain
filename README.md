@@ -16,7 +16,7 @@ needed by the Firefox build:
 
 ```sh
 docker pull \
-  ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r1
+  ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2
 ```
 
 The minimal runtime image contains the same Wine installation without the
@@ -24,7 +24,7 @@ Firefox build tools:
 
 ```sh
 docker pull \
-  ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r1
+  ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2
 ```
 
 Both images support `linux/arm64` only.
@@ -39,8 +39,8 @@ The command builds the Wine runtime and Firefox toolchain images. Set
 `FXC_WINE_IMAGE` and `FXC_IMAGE` to change their tags:
 
 ```sh
-FXC_WINE_IMAGE=example/wine-runtime:wine-11.10-bookworm-r1 \
-  FXC_IMAGE=example/firefox-toolchain:wine-11.10-bookworm-r1 \
+FXC_WINE_IMAGE=example/wine-runtime:wine-11.10-bookworm-r2 \
+  FXC_IMAGE=example/firefox-toolchain:wine-11.10-bookworm-r2 \
   ./scripts/build-image.sh
 ```
 
@@ -110,6 +110,8 @@ image also contains the Debian packages used to build Firefox. The Wine source
 URL and SHA-256 digest are pinned in
 [`docker/Dockerfile`](docker/Dockerfile). The Wine patch is stored in
 [`patches/wine-11.10-page-align.patch`](patches/wine-11.10-page-align.patch).
+The `r2` images strip debug sections from Wine runtime binaries and omit static
+development archives that still contain debug sections.
 
 The published images do not contain Firefox source, MSVC, Visual Studio VSIX
 files, the Windows SDK, a Wine prefix, `.mozbuild` state, credentials, or build

@@ -2,7 +2,14 @@
 
 set -euo pipefail
 
-image=${FXC_WINE_IMAGE:-firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r1}
+image=${FXC_WINE_IMAGE:-firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2}
+
+debug_symbols=$(docker image inspect "$image" \
+  --format '{{ index .Config.Labels "org.opencontainers.image.debug-symbols" }}')
+if [[ "$debug_symbols" != stripped ]]; then
+  printf 'Wine debug symbols are not marked stripped: %s\n' "$debug_symbols" >&2
+  exit 1
+fi
 
 docker run --rm --platform linux/arm64 "$image" bash -lc '
   set -euo pipefail
