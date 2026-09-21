@@ -13,6 +13,7 @@ for file in \
   CLAUDE.md \
   docker/Dockerfile \
   patches/wine-11.10-page-align.patch \
+  scripts/ensure-image.sh \
   scripts/hydrate-toolchains.sh \
   scripts/check-toolchains.sh \
   scripts/check-wine-runtime-tools.sh \
@@ -21,6 +22,7 @@ for file in \
   test -s "$repo_root/$file"
 done
 
+"$repo_root/scripts/ensure-image.sh" --help >/dev/null
 "$repo_root/scripts/hydrate-toolchains.sh" --help >/dev/null
 "$repo_root/scripts/check-toolchains.sh" --help >/dev/null
 "$repo_root/scripts/check-wine-runtime-tools.sh" --help >/dev/null

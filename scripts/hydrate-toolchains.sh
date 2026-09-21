@@ -40,7 +40,8 @@ for path in mach build/moz.configure taskcluster/scripts/misc/get_vs.py; do
   fi
 done
 
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
+script_dir=$(cd "$(dirname "$0")" && pwd)
+image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
 accept_microsoft_license=${FXC_ACCEPT_MICROSOFT_LICENSE:-0}
 
@@ -50,10 +51,7 @@ rustup_version=1.29.0
 rustup_host=aarch64-unknown-linux-gnu
 rustup_sha256=9732d6c5e2a098d3521fca8145d826ae0aaa067ef2385ead08e6feac88fa5792
 
-if ! docker image inspect "$image" >/dev/null 2>&1; then
-  printf 'Docker image not found: %s\nRun ./scripts/build-image.sh first.\n' "$image" >&2
-  exit 1
-fi
+"$script_dir/ensure-image.sh" "$image"
 
 docker volume create "$state_volume" >/dev/null
 docker run --rm \
@@ -183,5 +181,5 @@ docker run --rm \
     printf "STATE_VOLUME=%s\n" "$FXC_STATE_VOLUME"
   '
 
-FXC_STATE_VOLUME=$state_volume \
-  "$(cd "$(dirname "$0")" && pwd)/check-toolchains.sh"
+FXC_IMAGE=$image FXC_STATE_VOLUME=$state_volume \
+  "$script_dir/check-toolchains.sh"

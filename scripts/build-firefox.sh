@@ -69,7 +69,7 @@ for path in mach build/moz.configure; do
 done
 
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
+image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
 objdir_volume=${FXC_OBJDIR_VOLUME:-$default_objdir_volume}
 artifacts_dir=${FXC_ARTIFACTS_DIR:-$repo_root/artifacts/$target}
@@ -82,7 +82,8 @@ case "$jobs" in
     ;;
 esac
 
-"$repo_root/scripts/hydrate-toolchains.sh" "$checkout"
+FXC_IMAGE=$image FXC_STATE_VOLUME=$state_volume \
+  "$repo_root/scripts/hydrate-toolchains.sh" "$checkout"
 
 docker volume create "$objdir_volume" >/dev/null
 docker run --rm \

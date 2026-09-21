@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
+script_dir=$(cd "$(dirname "$0")" && pwd)
+image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
+
+"$script_dir/ensure-image.sh" "$image"
 
 docker run --rm --platform linux/arm64 "$image" bash -lc '
   set -euo pipefail

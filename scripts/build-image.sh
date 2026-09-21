@@ -3,8 +3,8 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
-toolchain_image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
-wine_runtime_image=${FXC_WINE_IMAGE:-firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2}
+toolchain_image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
+wine_runtime_image=${FXC_WINE_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2}
 revision=$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf unknown)
 
 docker build \

@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
-image=${FXC_WINE_IMAGE:-firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2}
+script_dir=$(cd "$(dirname "$0")" && pwd)
+image=${FXC_WINE_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2}
+
+"$script_dir/ensure-image.sh" "$image"
 
 debug_symbols=$(docker image inspect "$image" \
   --format '{{ index .Config.Labels "org.opencontainers.image.debug-symbols" }}')

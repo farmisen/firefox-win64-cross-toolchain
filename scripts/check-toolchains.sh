@@ -26,13 +26,11 @@ if (( $# != 0 )); then
   exit 2
 fi
 
-image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
+script_dir=$(cd "$(dirname "$0")" && pwd)
+image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
 
-if ! docker image inspect "$image" >/dev/null 2>&1; then
-  printf 'Docker image not found: %s\n' "$image" >&2
-  exit 1
-fi
+"$script_dir/ensure-image.sh" "$image"
 if ! docker volume inspect "$state_volume" >/dev/null 2>&1; then
   printf 'Toolchain state volume not found: %s\n' "$state_volume" >&2
   exit 1

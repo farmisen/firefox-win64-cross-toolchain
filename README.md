@@ -27,7 +27,9 @@ docker pull \
   ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-runtime-11.10-bookworm-r2
 ```
 
-Both images support `linux/arm64` only.
+Both images support `linux/arm64` only. The scripts default to these published
+names and pull them when they are not present locally, so the manual pull is
+optional.
 
 ## Build the images
 
@@ -35,7 +37,8 @@ Both images support `linux/arm64` only.
 ./scripts/build-image.sh
 ```
 
-The command builds the Wine runtime and Firefox toolchain images. Set
+The command builds the Wine runtime and Firefox toolchain images under the
+published names, so the scripts use the local build instead of pulling. Set
 `FXC_WINE_IMAGE` and `FXC_IMAGE` to change their tags:
 
 ```sh
@@ -84,8 +87,8 @@ Set these variables to change the defaults:
 | Variable | Purpose |
 | --- | --- |
 | `FXC_TARGET` | `win64` (default) or `win64-aarch64` |
-| `FXC_IMAGE` | Container image name |
-| `FXC_WINE_IMAGE` | Minimal Wine runtime image name |
+| `FXC_IMAGE` | Container image name, pulled when missing locally |
+| `FXC_WINE_IMAGE` | Minimal Wine runtime image name, pulled when missing locally |
 | `FXC_STATE_VOLUME` | Downloaded toolchain volume |
 | `FXC_OBJDIR_VOLUME` | Firefox object directory volume |
 | `FXC_ARTIFACTS_DIR` | Host artifact directory |
