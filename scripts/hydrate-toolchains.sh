@@ -192,6 +192,16 @@ docker run --rm \
       trap - EXIT
     fi
 
+    # The Firefox build/moz.configure/windows-toolchain.configure file hard-codes
+    # bin/Hostarm64 for ARM64 hosts, but MSVC 14.5x ships bin/HostArm64. On a
+    # case-sensitive filesystem that lookup fails with "Cannot find a Visual
+    # C++ install for e.g. ATL headers", so add a compatibility symlink.
+    for bin_dir in "$vs_dir"/VC/Tools/MSVC/*/bin; do
+      if [[ -d "$bin_dir/HostArm64" && ! -e "$bin_dir/Hostarm64" ]]; then
+        ln -s HostArm64 "$bin_dir/Hostarm64"
+      fi
+    done
+
     printf "STATE_VOLUME=%s\n" "$FXC_STATE_VOLUME"
   '
 
