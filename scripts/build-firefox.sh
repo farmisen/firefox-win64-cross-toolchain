@@ -125,6 +125,8 @@ ac_add_options --target=$target_triple
 ac_add_options --enable-project=browser
 ac_add_options --enable-bootstrap=no-update,-wine
 
+export CC="\$HOME/.mozbuild/clang/bin/clang-cl --target=$target_triple"
+export CXX="\$HOME/.mozbuild/clang/bin/clang-cl --target=$target_triple"
 export WINE=/opt/wine/bin/wine
 export MAKENSISU=/usr/bin/makensis
 
