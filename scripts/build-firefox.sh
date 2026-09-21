@@ -160,7 +160,7 @@ docker exec "$container" bash -lc '
 
   mapfile -t assemblers < <(
     find "$HOME/.mozbuild/vs/VC/Tools/MSVC" -type f \
-      -path "$FXC_ASSEMBLER_PATTERN" -print | sort -V
+      -ipath "$FXC_ASSEMBLER_PATTERN" -print | sort -V
   )
   if (( ${#assemblers[@]} == 0 )); then
     printf "Assembler not found for %s\n" "$FXC_TARGET_TRIPLE" >&2

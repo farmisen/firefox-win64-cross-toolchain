@@ -74,7 +74,7 @@ docker run --rm \
       local root=$1
       local pattern=$2
       local matches
-      mapfile -t matches < <(find "$root" -type f -path "$pattern" -print | sort -V)
+      mapfile -t matches < <(find "$root" -type f -ipath "$pattern" -print | sort -V)
       if (( ${#matches[@]} == 0 )); then
         printf "No file matches %s under %s\n" "$pattern" "$root" >&2
         return 1

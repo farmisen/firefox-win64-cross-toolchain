@@ -118,18 +118,29 @@ docker run --rm \
     marker="$HOME/.mozbuild/firefox-win64-cross-vs.sha256"
     vs_dir="$HOME/.mozbuild/vs"
 
+    # Match paths case-insensitively: MSVC 14.4x ships bin/Hostarm64 while
+    # MSVC 14.5x (Visual Studio 2026) ships bin/HostArm64.
     vs_is_complete() {
       local root=$1
-      local ml64 armasm64 midl fxc
-      ml64=$(find "$root/VC/Tools/MSVC" -type f -executable \
-        -path "*/bin/Hostarm64/x64/ml64.exe" -print -quit 2>/dev/null || true)
-      armasm64=$(find "$root/VC/Tools/MSVC" -type f -executable \
-        -path "*/bin/Hostarm64/arm64/armasm64.exe" -print -quit 2>/dev/null || true)
-      midl=$(find "$root/Windows Kits/10/bin" -type f -executable \
-        -path "*/arm64/midl.exe" -print -quit 2>/dev/null || true)
-      fxc=$(find "$root/Windows Kits/10/bin" -type f -executable \
-        -path "*/arm64/fxc.exe" -print -quit 2>/dev/null || true)
-      [[ -n "$ml64" && -n "$armasm64" && -n "$midl" && -n "$fxc" ]]
+      local specs=(
+        "VC/Tools/MSVC:*/bin/Hostarm64/x64/ml64.exe"
+        "VC/Tools/MSVC:*/bin/Hostarm64/arm64/armasm64.exe"
+        "Windows Kits/10/bin:*/arm64/midl.exe"
+        "Windows Kits/10/bin:*/arm64/fxc.exe"
+      )
+      local spec subdir pattern found complete=1
+      for spec in "${specs[@]}"; do
+        subdir=${spec%%:*}
+        pattern=${spec#*:}
+        found=$(find "$root/$subdir" -type f -executable \
+          -ipath "$pattern" -print -quit 2>/dev/null || true)
+        if [[ -z "$found" ]]; then
+          printf "Missing Visual Studio tool %s under %s\n" \
+            "$pattern" "$root/$subdir" >&2
+          complete=0
+        fi
+      done
+      (( complete ))
     }
 
     installed_hash=
@@ -152,13 +163,16 @@ docker run --rm \
       backup_dir="$HOME/.mozbuild/vs.fxc-backup.$$"
       rm -rf "$tmp_dir" "$backup_dir"
 
+      # Do not call exit here: the shell keeps the failing status on its own,
+      # and exiting from an EXIT trap in a login shell trips a bash 5.2 bug
+      # that prints "pop_var_context: head of shell_variables not a function
+      # context" while ~/.bash_logout runs.
       restore_vs() {
         status=$?
         if (( status != 0 )) && [[ ! -d "$vs_dir" && -d "$backup_dir" ]]; then
           mv "$backup_dir" "$vs_dir"
         fi
         rm -rf "$tmp_dir"
-        exit "$status"
       }
       trap restore_vs EXIT
 
