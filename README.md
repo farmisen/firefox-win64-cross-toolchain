@@ -47,7 +47,8 @@ FXC_WINE_IMAGE=example/wine-runtime:wine-11.10-bookworm-r2 \
 ## Build Firefox for Windows x86-64
 
 The first build downloads the Mozilla and Microsoft toolchains pinned by the
-Firefox checkout. Review the applicable Microsoft terms, then run:
+Firefox checkout and installs a pinned rustup with the stable Rust toolchain
+into the toolchain volume. Review the applicable Microsoft terms, then run:
 
 ```sh
 FXC_ACCEPT_MICROSOFT_LICENSE=1 \

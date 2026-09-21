@@ -44,6 +44,12 @@ image=${FXC_IMAGE:-firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
 accept_microsoft_license=${FXC_ACCEPT_MICROSOFT_LICENSE:-0}
 
+# Pinned rustup installer for the Linux ARM64 build container. Keep in sync
+# with RUSTUP_VERSION and RUSTUP_HASHES in python/mozboot/mozboot/rust.py.
+rustup_version=1.29.0
+rustup_host=aarch64-unknown-linux-gnu
+rustup_sha256=9732d6c5e2a098d3521fca8145d826ae0aaa067ef2385ead08e6feac88fa5792
+
 if ! docker image inspect "$image" >/dev/null 2>&1; then
   printf 'Docker image not found: %s\nRun ./scripts/build-image.sh first.\n' "$image" >&2
   exit 1
@@ -63,6 +69,9 @@ docker run --rm \
   --mount "type=volume,src=$state_volume,dst=/home/builder" \
   --env "FXC_ACCEPT_MICROSOFT_LICENSE=$accept_microsoft_license" \
   --env "FXC_STATE_VOLUME=$state_volume" \
+  --env "FXC_RUSTUP_VERSION=$rustup_version" \
+  --env "FXC_RUSTUP_HOST=$rustup_host" \
+  --env "FXC_RUSTUP_SHA256=$rustup_sha256" \
   "$image" \
   bash -lc '
     set -euo pipefail
@@ -74,7 +83,27 @@ docker run --rm \
     ./mach --no-interactive bootstrap \
       --application-choice browser \
       --no-system-changes
-    "$HOME/.cargo/bin/rustup" target add \
+
+    # mach bootstrap --no-system-changes never installs Rust. Install rustup
+    # the same way mozboot does; the version and digest match
+    # python/mozboot/mozboot/rust.py in the Firefox checkout.
+    rustup="$HOME/.cargo/bin/rustup"
+    if [[ ! -x "$rustup" ]]; then
+      printf "Installing rustup %s\n" "$FXC_RUSTUP_VERSION" >&2
+      # rustup-init selects its mode from its file name, so keep the prefix.
+      rustup_init=$(mktemp "${TMPDIR:-/tmp}/rustup-init.XXXXXX")
+      curl --fail --silent --show-error --location --retry 3 \
+        --output "$rustup_init" \
+        "https://static.rust-lang.org/rustup/archive/$FXC_RUSTUP_VERSION/$FXC_RUSTUP_HOST/rustup-init"
+      printf "%s  %s\n" "$FXC_RUSTUP_SHA256" "$rustup_init" | sha256sum --check --quiet -
+      chmod 0700 "$rustup_init"
+      "$rustup_init" -y --no-modify-path \
+        --default-toolchain stable \
+        --default-host "$FXC_RUSTUP_HOST" \
+        --component rustfmt
+      rm -f "$rustup_init"
+    fi
+    "$rustup" target add \
       x86_64-pc-windows-msvc \
       aarch64-pc-windows-msvc
 
