@@ -95,6 +95,7 @@ Set these variables to change the defaults:
 | `FXC_JOBS` | Parallel build job count |
 | `FXC_SCCACHE` | Set to `1` to compile through sccache |
 | `FXC_SCCACHE_SIZE` | sccache size limit, `20G` by default |
+| `FXC_ARTIFACT_BUILD` | Set to `1` to download prebuilt binaries from Mozilla CI instead of compiling them |
 
 With `FXC_SCCACHE=1`, the Firefox bootstrap downloads sccache and the cache is
 stored in the toolchain volume, so it survives clobbers and is shared by both

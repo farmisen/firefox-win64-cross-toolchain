@@ -19,6 +19,8 @@ Environment:
   FXC_JOBS                      Parallel build job count
   FXC_SCCACHE                   Set to 1 to compile through sccache
   FXC_SCCACHE_SIZE              sccache size limit, such as 20G (default)
+  FXC_ARTIFACT_BUILD            Set to 1 to download prebuilt binaries from
+                                Mozilla CI instead of compiling them
 EOF
 }
 
@@ -69,6 +71,16 @@ for path in mach build/moz.configure; do
     exit 1
   fi
 done
+
+artifact_build=${FXC_ARTIFACT_BUILD:-0}
+case "$artifact_build" in
+  0) ;;
+  1) default_objdir_volume=$default_objdir_volume-artifact ;;
+  *)
+    printf 'FXC_ARTIFACT_BUILD must be 0 or 1: %s\n' "$artifact_build" >&2
+    exit 2
+    ;;
+esac
 
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
@@ -148,7 +160,9 @@ export MAKENSISU=/usr/bin/makensis
 
 mk_add_options MOZ_OBJDIR=$container_objdir
 EOF
-if [[ $sccache == 1 ]]; then
+if [[ $artifact_build == 1 ]]; then
+  printf 'ac_add_options --enable-artifact-builds\n' >> "$mozconfig"
+elif [[ $sccache == 1 ]]; then
   # The cache lives under /home/builder/.cache/sccache on the state volume.
   printf 'ac_add_options --with-ccache=sccache\n' >> "$mozconfig"
 fi
