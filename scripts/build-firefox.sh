@@ -21,6 +21,9 @@ Environment:
   FXC_SCCACHE_SIZE              sccache size limit, such as 20G (default)
   FXC_ARTIFACT_BUILD            Set to 1 to download prebuilt binaries from
                                 Mozilla CI instead of compiling them
+  FXC_AUTOCLOBBER               Set to 1 to clobber the object directory when
+                                the checkout requires it, instead of stopping
+                                (default: 1 for artifact builds, 0 otherwise)
 EOF
 }
 
@@ -78,6 +81,15 @@ case "$artifact_build" in
   1) default_objdir_volume=$default_objdir_volume-artifact ;;
   *)
     printf 'FXC_ARTIFACT_BUILD must be 0 or 1: %s\n' "$artifact_build" >&2
+    exit 2
+    ;;
+esac
+
+autoclobber=${FXC_AUTOCLOBBER:-$artifact_build}
+case "$autoclobber" in
+  0|1) ;;
+  *)
+    printf 'FXC_AUTOCLOBBER must be 0 or 1: %s\n' "$autoclobber" >&2
     exit 2
     ;;
 esac
@@ -165,6 +177,9 @@ if [[ $artifact_build == 1 ]]; then
 elif [[ $sccache == 1 ]]; then
   # The cache lives under /home/builder/.cache/sccache on the state volume.
   printf 'ac_add_options --with-ccache=sccache\n' >> "$mozconfig"
+fi
+if [[ $autoclobber == 1 ]]; then
+  printf 'mk_add_options AUTOCLOBBER=1\n' >> "$mozconfig"
 fi
 chmod 0644 "$mozconfig"
 
