@@ -37,9 +37,17 @@ fi
 test "$target_error" = \
   'FXC_TARGET must be win64 or win64-aarch64: unsupported'
 
+# Personal paths: any macOS home directory, plus the current user's home
+# (covers Linux homes without matching container paths like /home/builder).
+scan_pattern='/Users/[A-Za-z0-9._-]+|2026091[0-9]T|fxe-win-cross'
+if [[ -n ${HOME:-} && $HOME != / ]]; then
+  home_pattern=$(printf '%s' "$HOME" | sed 's/[][\.*^$+?(){}|]/\\&/g')
+  scan_pattern="$scan_pattern|$home_pattern"
+fi
+
 if command -v rg >/dev/null; then
   scan_command=(
-    rg -n '/Users/farmisen|2026091[0-9]T|fxe-win-cross' "$repo_root"
+    rg -n "$scan_pattern" "$repo_root"
     --glob '!scripts/check.sh'
     --glob '!docs/verified-run.md'
   )
@@ -49,7 +57,7 @@ else
     --exclude=check.sh
     --exclude=verified-run.md
     --exclude-dir=.git
-    '/Users/farmisen|2026091[0-9]T|fxe-win-cross'
+    "$scan_pattern"
     "$repo_root"
   )
 fi

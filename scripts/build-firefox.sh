@@ -17,6 +17,13 @@ Environment:
   FXC_OBJDIR_VOLUME             Firefox object directory volume
   FXC_ARTIFACTS_DIR             Host output directory for the selected target
   FXC_JOBS                      Parallel build job count
+  FXC_SCCACHE                   Set to 1 to compile through sccache
+  FXC_SCCACHE_SIZE              sccache size limit, such as 20G (default)
+  FXC_ARTIFACT_BUILD            Set to 1 to download prebuilt binaries from
+                                Mozilla CI instead of compiling them
+  FXC_AUTOCLOBBER               Set to 1 to clobber the object directory when
+                                the checkout requires it, instead of stopping
+                                (default: 1 for artifact builds, 0 otherwise)
 EOF
 }
 
@@ -68,6 +75,25 @@ for path in mach build/moz.configure; do
   fi
 done
 
+artifact_build=${FXC_ARTIFACT_BUILD:-0}
+case "$artifact_build" in
+  0) ;;
+  1) default_objdir_volume=$default_objdir_volume-artifact ;;
+  *)
+    printf 'FXC_ARTIFACT_BUILD must be 0 or 1: %s\n' "$artifact_build" >&2
+    exit 2
+    ;;
+esac
+
+autoclobber=${FXC_AUTOCLOBBER:-$artifact_build}
+case "$autoclobber" in
+  0|1) ;;
+  *)
+    printf 'FXC_AUTOCLOBBER must be 0 or 1: %s\n' "$autoclobber" >&2
+    exit 2
+    ;;
+esac
+
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 image=${FXC_IMAGE:-ghcr.io/farmisen/firefox-win64-cross-toolchain:wine-11.10-bookworm-r2}
 state_volume=${FXC_STATE_VOLUME:-firefox-win64-cross-toolchain-state}
@@ -81,6 +107,21 @@ case "$jobs" in
     exit 1
     ;;
 esac
+
+sccache=${FXC_SCCACHE:-0}
+case "$sccache" in
+  0|1) ;;
+  *)
+    printf 'FXC_SCCACHE must be 0 or 1: %s\n' "$sccache" >&2
+    exit 2
+    ;;
+esac
+
+sccache_size=${FXC_SCCACHE_SIZE:-20G}
+if [[ ! $sccache_size =~ ^[1-9][0-9]*[KMGT]?$ ]]; then
+  printf 'FXC_SCCACHE_SIZE must be a size such as 20G: %s\n' "$sccache_size" >&2
+  exit 2
+fi
 
 FXC_IMAGE=$image FXC_STATE_VOLUME=$state_volume \
   "$repo_root/scripts/hydrate-toolchains.sh" "$checkout"
@@ -131,6 +172,15 @@ export MAKENSISU=/usr/bin/makensis
 
 mk_add_options MOZ_OBJDIR=$container_objdir
 EOF
+if [[ $artifact_build == 1 ]]; then
+  printf 'ac_add_options --enable-artifact-builds\n' >> "$mozconfig"
+elif [[ $sccache == 1 ]]; then
+  # The cache lives under /home/builder/.cache/sccache on the state volume.
+  printf 'ac_add_options --with-ccache=sccache\n' >> "$mozconfig"
+fi
+if [[ $autoclobber == 1 ]]; then
+  printf 'mk_add_options AUTOCLOBBER=1\n' >> "$mozconfig"
+fi
 chmod 0644 "$mozconfig"
 
 docker run --detach \
@@ -148,6 +198,7 @@ docker run --detach \
   --env "FXC_OBJDIR=$container_objdir" \
   --env "FXC_PACKAGE_PLATFORM=$package_platform" \
   --env "FXC_TARGET_TRIPLE=$target_triple" \
+  --env "SCCACHE_CACHE_SIZE=$sccache_size" \
   "$image" \
   sleep infinity >/dev/null
 
